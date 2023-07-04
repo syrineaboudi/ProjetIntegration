@@ -44,6 +44,9 @@ require("./app/routes/auth.routes")(app);
 //user route 
 require("./app/routes/user.routes")(app);
 
+require("./app/routes/reclamation.routes")(app);
+require("./app/routes/reponse.routes")(app);
+
 
 
 // set port, listen for requests
