@@ -1,17 +1,19 @@
 const express = require("express");
 const cors = require("cors");
 const dbConfig = require("./app/config/db.config");
+const path = require("path");
 
 const app = express();
 
 var corsOptions = {
-  origin: "http://localhost:4200"
+  origin: ["http://localhost:4100","http://localhost:4200"]
 };
 
 app.use(cors(corsOptions));
 
 // parse requests of content-type - application/json
 app.use(express.json());
+app.use("/productImages", express.static(path.join(__dirname, "../public/productImages")));
 
 // parse requests of content-type - application/x-www-form-urlencoded
 app.use(express.urlencoded({ extended: true }));
@@ -47,7 +49,14 @@ require("./app/routes/user.routes")(app);
 require("./app/routes/reclamation.routes")(app);
 require("./app/routes/reponse.routes")(app);
 
+// product route 
+require("./app/routes/product.routes")(app);
 
+// category route 
+require("./app/routes/category.routes")(app);
+
+// dashboard route 
+require("./app/routes/dashboard.routes")(app);
 
 // set port, listen for requests
 const PORT = process.env.PORT || 8080;
