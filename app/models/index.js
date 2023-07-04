@@ -8,7 +8,4 @@ db.reclamations = require("./reclamation.model.js")(mongoose);
 db.notification = require("./notification.model.js")(mongoose);
 db.reponses = require("./reponse.model.js")(mongoose);
 
-
-
-
 module.exports = db;
