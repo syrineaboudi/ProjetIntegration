@@ -2,6 +2,7 @@ const db = require("../models");
 const Dashboard = db.dashboard;
 const Category = db.category;
 const Product = db.products;
+const User = db.user;
 
 // details of Dashboard
 exports.details = (req, res) => {
@@ -16,20 +17,20 @@ exports.details = (req, res) => {
 
             return Product.countDocuments();
         })
-     /*    .then(count => {
+         .then(count => {
             productCount = count;
             console.log('productCount:', productCount);
 
             return User.countDocuments();
-        }) */
+        }) 
         .then(count => {
-            productCount = count;
-            console.log('productCount:', productCount);
+            userCount = count;
+            console.log('userCount:', userCount);
 
             const data = {
                 category: categoryCount,
                 product: productCount,
-                //user: userCount
+                user: userCount
             };
 
             res.status(200).json(data);
