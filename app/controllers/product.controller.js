@@ -4,7 +4,7 @@ const Category = db.category;
 
 // Create and Save a new Product
 exports.createProduct = async (req, res) => {
-    const { name, categoryName, description, price, quantity, status } = req.body;
+    const { name, categoryName, description, price, priceDiscount, quantity, status } = req.body;
     // Validate request
     if (!name || !description || !price || !quantity) {
         res.status(400).send({ message: "Content of product can not be empty!" });
@@ -33,6 +33,7 @@ exports.createProduct = async (req, res) => {
             category: existingCategory._id,
             description,
             price,
+            priceDiscount,
             quantity,
             images: arrImages,
             status: true, // Assuming status is always true when adding a product
@@ -58,9 +59,8 @@ exports.createProduct = async (req, res) => {
 
 // Retrieve all Product from the database.
 exports.findAllProducts = async (req, res) => {
-
     try {
-        const products = await Product.find().populate('category', 'name');
+        const products = await Product.find({ category: { $ne: null } }).populate('category', 'name');
         res.json(products);
     } catch (error) {
         console.error('Error fetching products:', error);
@@ -88,6 +88,7 @@ exports.getAllProductsByCategory = (req, res) => {
                 name: 1,
                 description: 1,
                 price: 1,
+                priceDiscount1,
                 quantity: 1,
                 status: 1,
                 categoryId: '$Category._id', // Corrected field name to 'Category'
@@ -128,9 +129,9 @@ exports.updateProductById = async (req, res) => {
         });
     }
 
-    try {
+    try { 
         const productId = req.params.id;
-        const { name, description, price, quantity, category } = req.body;
+        const { name, description, price, priceDiscount ,quantity, category } = req.body;
 
         // Find the product by ID
         const product = await Product.findById(productId);
@@ -140,13 +141,16 @@ exports.updateProductById = async (req, res) => {
 
         // Update the product fields
         if (name) {
-            product.name = name;
+            product.name = name; 
         }
         if (description) {
             product.description = description;
         }
         if (price) {
             product.price = price;
+        } 
+        if (priceDiscount) {
+            product.priceDiscount = priceDiscount;
         }
         if (quantity) {
             product.quantity = quantity;
@@ -156,16 +160,14 @@ exports.updateProductById = async (req, res) => {
         if (category) {
             // Assuming the category field is a reference to the Category model
             // First, find the category by name or any unique identifier
-            const foundCategory = await Category.findOne({ name: category });
+            const foundCategory = await Category.findOne({ nameC: category});
             if (foundCategory) {
                 // If the category exists, update the reference in the product
-                product.category = foundCategory._id;
+                product.category = foundCategory._id; 
             } else {
                 // If the category doesn't exist, you may choose to create a new one or handle it as required.
                 // For example:
-                const newCategory = new Category({ name: category });
-                await newCategory.save();
-                product.category = newCategory._id;
+                throw new Error('Category not found');
             }
         }
 

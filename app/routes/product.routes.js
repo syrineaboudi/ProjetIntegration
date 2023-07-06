@@ -1,6 +1,6 @@
 module.exports = app => {
     const products = require("../controllers/product.controller.js");
-
+    const { authJwt } = require("../middlewares");
     const multer = require("multer");
     const path = require("path");
 
@@ -50,10 +50,10 @@ module.exports = app => {
     router.put("/updateproductbyid/:id", products.updateProductById);
 
     // Delete a Product with id
-    router.delete("/deleteproductbyid/:id", products.deleteProductById);
+    router.delete("/deleteproductbyid/:id",[authJwt.verifyToken, authJwt.isAdmin], products.deleteProductById);
 
     // Delete all Products
-    router.delete("/deleteallproducts", products.deleteAllProducts);
+    router.delete("/deleteallproducts", [authJwt.verifyToken, authJwt.isAdmin], products.deleteAllProducts);
 
     // Update status product
     router.put("/updatestatusproduct/:id/status", products.updateStatusProduct);

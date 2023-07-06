@@ -2,23 +2,29 @@ const express = require("express");
 const cors = require("cors");
 const dbConfig = require("./app/config/db.config");
 const path = require("path");
+const bodyParser = require('body-parser');
 
 const app = express();
 
 var corsOptions = {
-  origin: ["http://localhost:4100","http://localhost:4200"]
+  origin: ["http://localhost:4100", "http://localhost:4200"]
 };
 
 app.use(cors(corsOptions));
 
 // parse requests of content-type - application/json
 app.use(express.json());
-app.use("/productImages", express.static(path.join(__dirname, "../public/productImages")));
+ app.use("/productimages", express.static(path.join(__dirname, 'app/public/productImages'))); 
+//app.use("/productimages", express.static('app/public/productImages'));
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({
+  limit: '50mb',
+  extended: true, parameterLimit: 1000000 }));
 
 // parse requests of content-type - application/x-www-form-urlencoded
 app.use(express.urlencoded({ extended: true }));
 
-const db = require("./app/models");
+const db = require("./app/models");  
 const Role = db.role;
 
 db.mongoose
