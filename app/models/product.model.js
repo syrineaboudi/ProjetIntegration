@@ -4,6 +4,7 @@ module.exports = mongoose => {
             name: { type: String, required: true },
             description: { type: String, required: true },
             price: { type: Number, required: true },
+            priceDiscount: { type: Number },
             quantity: { type: Number, required: true },
             status: { type: Boolean, default: true },
             images: { type: Array, required: true, validate: [arrayLimite, 'You can pass only 5 product images'] },
