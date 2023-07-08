@@ -1,16 +1,17 @@
 const db = require("../models");
 const Reclamation = db.reclamations;
 const Notification = db.notification;
-
 const multer = require("multer");
+const User = db.user;
 
-//upload image
+
 const FILE_TYPE_MAP = {
   "image/png": "png",
   "image/jpeg": "jpeg",
   "image/jpg": "jpg",
 };
 
+// upload image
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     const isValid = FILE_TYPE_MAP[file.mimetype];
@@ -18,7 +19,7 @@ const storage = multer.diskStorage({
     if (isValid) {
       uploadError = null;
     }
-    cb(uploadError, "public/uploads");
+    cb(uploadError, "public/productImages");
   },
   filename: function (req, file, cb) {
     const fileName = "test";
@@ -33,52 +34,58 @@ const upload = multer({ storage: storage });
 exports.create = (req, res) => {
   upload.single('image')(req, res, (err) => {
     if (err) {
-      // Handle any multer upload errors here
+      console.error(err);
       return res.status(400).send("Error uploading image");
     }
 
-    console.log({ req });
-    console.log("----------------------------- 0");
-
     if (!req.body.client) {
       res.status(400).send({
-        message: "Content can not be empty!",
+        message: "Content can not be empty!"
       });
       return;
     }
 
-    const file = req.file; // Use req.file instead of req.get("image")
+    const file = req.file;
     if (!file) return res.status(400).send("No image in the request");
-    console.log("----------------------------- 1");
 
     const fileName = file.filename;
-    const basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
-    console.log("----------------------------- 2");
+    const basePath = `${req.protocol}://${req.get("host")}/public/productImages/`;
 
-    const reclamation = new Reclamation({
-      client: req.body.client,
-      type: req.body.type,
-      description: req.body.description,
-      image: `${basePath}${fileName}`,
-      email: req.body.email,
-      numero_telephone: req.body.numero_telephone,
-      Status: req.body.Status,
-    });
+    User.findById(req.body.employee) // Recherche de l'utilisateur par ID
+      .then(user => {
+        if (!user) {
+          // Gérez le cas où l'utilisateur n'est pas trouvé
+          return res.status(404).json({ message: 'Employee not found' });
+        }
 
-    console.log({ reclamation });
-
-    reclamation
-      .save(reclamation)
-      .then((data) => {
-        res.send(data);
-      })
-      .catch((err) => {
-        res.status(500).send({
-          message: err.message || "erreur ajout reclamation",
+        const reclamation = new Reclamation({
+          client: req.body.client,
+          type: req.body.type,
+          description: req.body.description,
+          image: `${basePath}${fileName}`,
+          email: req.body.email,
+          numero_telephone: req.body.numero_telephone,
+          Status: req.body.Status,
+          employee: req.body.employee,
+          employeeName: user.name // Associez le nom de l'employé récupéré à la propriété employeeName
         });
+
+        reclamation.save()
+          .then((data) => {
+            res.send(data);
+          })
+          .catch((err) => {
+            res.status(500).send({
+              message: err.message || "Erreur lors de l'ajout de la réclamation",
+            });
+          });
+      })
+      .catch(error => {
+        res.status(500).json({ message: 'Failed to find employee', error: error });
       });
   });
 };
+
 
 
 // liste reclamation
@@ -196,7 +203,7 @@ exports.findAllPublished = (req, res) => {
       });
     });
 };
-//affichage liste reclamation trier par date creation
+
 // affichage liste reclamation trier par date de création
 exports.findAllSortedByCreationDate = (req, res) => {
   Reclamation.find()
@@ -283,62 +290,6 @@ exports.statistiqueTraite = (req, res) => {
     });
 };
 
-//add reclamation et envoyer notification a l admin
-exports.createReclamation = (req, res) => {
-  upload.single('image')(req, res, (err) => {
-    if (err) {
-      // Handle any multer upload errors here
-      return res.status(400).send("Error uploading image");
-    }
-
-    console.log({ req });
-    console.log("----------------------------- 0");
-
-    if (!req.body.client) {
-      res.status(400).send({
-        message: "Content can not be empty!",
-      });
-      return;
-    }
-
-    const file = req.file; // Use req.file instead of req.get("image")
-    if (!file) return res.status(400).send("No image in the request");
-    console.log("----------------------------- 1");
-
-    const fileName = file.filename;
-    const basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
-    console.log("----------------------------- 2");
-
-    const reclamation = new Reclamation({
-      client: req.body.client,
-      type: req.body.type,
-      description: req.body.description,
-      image: `${basePath}${fileName}`,
-      email: req.body.email,
-      numero_telephone: req.body.numero_telephone,
-      Status: req.body.Status,
-    });
-
-    reclamation
-      .save(reclamation)
-      .then((data) => {
-        // Create a new notification for the admin
-        const notification = new Notification({
-          message: `New reclamation added by ${data.client}`,
-          read: false,
-        });
-        notification.save();
-
-        res.send(data);
-      })
-      .catch((err) => {
-        res.status(500).send({
-          message: err.message || "erreur ajout reclamation",
-        });
-      });
-  });
-};
-
 // liste reclamations &&  notifications non lu
 exports.findAllreclamationsNot = (req, res) => {
   const client = req.query.client;
@@ -377,9 +328,6 @@ exports.sendMessage = async (req, res) => {
     res.status(500).json({ success: false, message: 'Erreur lors de l enregistrement du message.' });
   }
 };
-
-
-
 
 // notifications non lu
 function getUnreadNotifications() {
