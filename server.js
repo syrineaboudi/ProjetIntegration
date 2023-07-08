@@ -2,30 +2,65 @@ const express = require("express");
 const cors = require("cors");
 const dbConfig = require("./app/config/db.config");
 const path = require("path");
-const bodyParser = require('body-parser');
-
+const socketIO = require('socket.io');
+const http = require('http');
+const session = require('express-session');
+const passport = require('passport');
 const app = express();
+const server = http.createServer(app);
+
+app.use(session({
+  secret: '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',
+  resave: false,
+  saveUninitialized: false
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+
+const io = require('socket.io')(server, {
+  cors: {
+    origin: ["http://localhost:4100","http://localhost:4200"],
+    methods: ["GET", "POST"],
+    allowedHeaders: ["my-custom-header"],
+    credentials: true
+  }
+});
 
 var corsOptions = {
-  origin: ["http://localhost:4100", "http://localhost:4200"]
+  origin: ["http://localhost:4100","http://localhost:4200"]
 };
+
 
 app.use(cors(corsOptions));
 
 // parse requests of content-type - application/json
 app.use(express.json());
- app.use("/productimages", express.static(path.join(__dirname, 'app/public/productImages'))); 
-//app.use("/productimages", express.static('app/public/productImages'));
-app.use(bodyParser.json({ limit: '50mb' }));
-app.use(bodyParser.urlencoded({
-  limit: '50mb',
-  extended: true, parameterLimit: 1000000 }));
+app.use('/public/productImages', express.static(path.join(__dirname, 'public/productImages')));
 
 // parse requests of content-type - application/x-www-form-urlencoded
 app.use(express.urlencoded({ extended: true }));
 
-const db = require("./app/models");  
+const db = require("./app/models");
 const Role = db.role;
+
+io.on("connection", (socket) => {
+  console.log("Nouvelle connexion Socket.io");
+
+  // Gérez les événements de notification
+  socket.on("addReclamation", (data) => {
+    console.log("Nouvelle réclamation ajoutée:", data);
+
+    // Émettez un événement "newNotification" à tous les clients connectés
+    io.emit("newNotification", {
+      client: data.client,
+      message: "votre réclamation envoyéé",
+    });
+  });
+
+  // Autres gestionnaires d'événements Socket.io...
+});
 
 db.mongoose
   .connect(`mongodb://${dbConfig.HOST}:${dbConfig.PORT}/${dbConfig.DB}`, {
@@ -60,14 +95,17 @@ require("./app/routes/product.routes")(app);
 
 // category route 
 require("./app/routes/category.routes")(app);
+// order route 
+require("./app/routes/order.routes")(app);
+const googleRoutes = require("./app/routes/google.routes");
+app.use(googleRoutes);
 
 // dashboard route 
 require("./app/routes/dashboard.routes")(app);
-// order route 
-require("./app/routes/order.routes")(app);
+
 // set port, listen for requests
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}.`);
 });
 
@@ -89,3 +127,4 @@ async function initial() {
     console.error('Error initializing roles:', err);
   }
 }
+
