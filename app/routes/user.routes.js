@@ -23,7 +23,7 @@ module.exports = function (app) {
 
   router.get(
     "/api/test/admin",
-    [authJwt.verifyToken, authJwt.isAdmin],
+    [authJwt.verifyToken],
     controller.adminBoard
   );
 
