@@ -16,6 +16,11 @@ module.exports = (mongoose) => {
         type: Boolean,
         default: false,
       },
+      employee: {
+        type: mongoose.Schema.Types.ObjectId, // Utilisation d'ObjectId pour représenter l'employé
+        ref: 'User', // Référence à la collection d'utilisateurs
+        required: false // À ajuster en fonction de votre logique métier
+      },
     },
     { timestamps: true }
   );
